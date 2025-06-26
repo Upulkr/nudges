@@ -1,9 +1,8 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Modal, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { ArrowRight, ArrowLeft, X, Target } from 'lucide-react-native';
+import { YStack, XStack, Text, Button, Card, Progress } from 'tamagui';
 import { renderHighlight, renderTooltip } from '@/utils/guidedTourutils';
-import { ArrowLeft, ArrowRight, Target, X } from 'lucide-react-native';
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Modal, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { Button, Card, Progress, Text, XStack, YStack } from 'tamagui';
-// import type { TourStep } from '../types/invoice';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -42,9 +41,8 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
-  const currentStepData:TourStep = steps[currentStep];
+  const currentStepData = steps[currentStep];
 
   useEffect(() => {
     if (visible && currentStepData) {
@@ -55,6 +53,14 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
         useNativeDriver: true,
       }).start();
 
+      // Calculate tooltip position based on step configuration
+      calculateTooltipPosition();
+
+      // Start pulse animation for highlights
+      if (currentStepData.highlight) {
+        startPulseAnimation();
+      }
+
       // Execute step action if provided
       if (currentStepData.action) {
         setTimeout(() => {
@@ -63,6 +69,58 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
       }
     }
   }, [currentStep, visible, currentStepData]);
+
+  const calculateTooltipPosition = () => {
+    const step = currentStepData;
+    let x = screenWidth / 2 - 150;
+    let y = screenHeight / 2 - 100;
+
+    if (step.highlight) {
+      const { x: hx, y: hy, width, height } = step.highlight;
+      
+      switch (step.placement) {
+        case 'top':
+          x = Math.max(20, Math.min(screenWidth - 320, hx + width / 2 - 150));
+          y = Math.max(20, hy - 180);
+          break;
+        case 'bottom':
+          x = Math.max(20, Math.min(screenWidth - 320, hx + width / 2 - 150));
+          y = Math.min(screenHeight - 200, hy + height + 20);
+          break;
+        case 'left':
+          x = Math.max(20, hx - 320);
+          y = Math.max(20, Math.min(screenHeight - 200, hy + height / 2 - 100));
+          break;
+        case 'right':
+          x = Math.min(screenWidth - 320, hx + width + 20);
+          y = Math.max(20, Math.min(screenHeight - 200, hy + height / 2 - 100));
+          break;
+        case 'center':
+        default:
+          // Keep center position
+          break;
+      }
+    }
+
+    setTooltipPosition({ x, y });
+  };
+
+  const startPulseAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -117,10 +175,10 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
         />
         
         {/* Highlight effects */}
-        {renderHighlight(currentStepData)}
+        {renderHighlight(currentStepData,pulseAnim)}
         
         {/* Tooltip */}
-        {renderTooltip(steps, currentStepData, currentStep, tooltipPosition, nextStep, prevStep, skip, true)}
+        {renderTooltip(currentStepData, tooltipPosition, fadeAnim, currentStepData, steps, nextStep, prevStep, skip)}
       </YStack>
     </Modal>
   );
