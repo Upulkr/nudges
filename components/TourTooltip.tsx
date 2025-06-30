@@ -21,7 +21,7 @@ export const TourTooltip: React.FC = () => {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   const currentStepData = steps[currentStep];
-
+console.log('Current Step Data===========:', currentStepData);
   useEffect(() => {
     if (isVisible && currentStepData) {
       // Fade in animation
@@ -296,8 +296,8 @@ export const TourTooltip: React.FC = () => {
                 </Progress>
               </YStack>
               {currentStepData.skipable !== false && (
-                <TouchableOpacity onPress={skipTour} style={{ padding: 8, marginLeft: 12 }}>
-                  <X size={20} color="$gray10" />
+                <TouchableOpacity onPress={skipTour} >
+                  <X size={30} color="#EF4444"  style={{padding: 8, marginLeft: 12}}/>
                 </TouchableOpacity>
               )}
             </XStack>

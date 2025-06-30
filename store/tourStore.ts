@@ -57,6 +57,11 @@ export const useTourStore = create<TourState>((set, get) => ({
 
   nextStep: () => {
     const { currentStep, steps, completeTour } = get();
+    if(currentStep===steps.length - 1 ) {
+      console.log("Tour completed");
+      completeTour();
+      return;
+    }
     if (currentStep < steps.length - 1) {
       set({ currentStep: currentStep + 1 });
     } else {
